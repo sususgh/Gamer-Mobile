@@ -1,6 +1,7 @@
 package com.sususgh.gamermobile
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -158,7 +159,7 @@ class MainActivity : Activity() {
             setPadding(dp(4), 0, 0, dp(8))
         })
         taskPanel.addView(taskCard("▣", "AI 模型管理") {
-            showToast("模型管理正在开发中，后续可配置本地模型和远程推理服务。")
+            showModelSetupDialog()
         })
         taskPanel.addView(taskCard("⌘", "游戏自动代理") {
             showToast("游戏自动代理尚未接通屏幕识别与 AI 动作引擎。")
@@ -296,6 +297,59 @@ class MainActivity : Activity() {
 
         setContentView(scroll)
         mascot.startFloating()
+    }
+
+    private fun showModelSetupDialog() {
+        val prefs = getSharedPreferences("gamer_mobile", MODE_PRIVATE)
+        val providers = arrayOf(
+            "OpenAI 兼容接口",
+            "DeepSeek",
+            "本地 / 自建服务器",
+            "其他兼容模型服务"
+        )
+        val current = prefs.getInt("model_provider_index", 0).coerceIn(providers.indices)
+        val providerPicker = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, providers)
+            setSelection(current)
+        }
+        val endpoint = EditText(this).apply {
+            hint = "服务地址（例如 https://your-host/v1）"
+            setSingleLine(true)
+            setText(prefs.getString("model_endpoint", ""))
+        }
+        val model = EditText(this).apply {
+            hint = "模型名称（例如模型服务要求的 model id）"
+            setSingleLine(true)
+            setText(prefs.getString("model_name", ""))
+        }
+        val note = TextView(this).apply {
+            text = "可配置不同模型服务。当前版本仅保存连接配置；尚未发送请求、联网研究或执行模型推理。API 密钥管理与安全存储将在接入网络客户端时实现，请勿在此处填写密钥。"
+            textSize = 12f
+            setTextColor(muted)
+            setPadding(0, dp(8), 0, 0)
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(providerPicker)
+            addView(endpoint)
+            addView(model)
+            addView(note)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("AI 模型与研究服务")
+            .setView(layout)
+            .setNegativeButton("取消", null)
+            .setPositiveButton("保存配置") { _, _ ->
+                prefs.edit()
+                    .putInt("model_provider_index", providerPicker.selectedItemPosition)
+                    .putString("model_endpoint", endpoint.text.toString().trim())
+                    .putString("model_name", model.text.toString().trim())
+                    .apply()
+                status.text = "模型服务配置已保存；当前尚未连接模型。"
+                speak("配置保存好啦！等模型连接功能接通，我们就可以请不同的 AI 帮忙研究冒险策略。")
+            }
+            .show()
     }
 
     private fun startVoiceInput() {
