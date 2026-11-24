@@ -168,6 +168,70 @@ class MainActivity : Activity() {
         })
         page.addView(taskPanel)
 
+        // World rules: survival is the default; creative remains an explicit alternative.
+        val worldPanel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = rounded(Color.WHITE, 20)
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+        }
+        worldPanel.addView(TextView(this).apply {
+            text = "世界模式"
+            textSize = 17f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(ink)
+        })
+        worldPanel.addView(TextView(this).apply {
+            text = "默认模式：生存模式 · 派蒙会主动探索、收集资源并努力生存"
+            textSize = 12f
+            setTextColor(muted)
+            setPadding(0, dp(4), 0, dp(9))
+        })
+        val modeChoices = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        val survivalChoice = TextView(this).apply {
+            text = "⚔ 生存模式（默认）"
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            background = rounded(Color.rgb(80, 132, 171), 14)
+            setPadding(dp(8), dp(12), dp(8), dp(12))
+        }
+        val creativeChoice = TextView(this).apply {
+            text = "✧ 创造模式"
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setTextColor(ink)
+            background = rounded(Color.rgb(235, 243, 249), 14)
+            setPadding(dp(8), dp(12), dp(8), dp(12))
+        }
+        modeChoices.addView(survivalChoice, LinearLayout.LayoutParams(0, -2, 1f).apply { rightMargin = dp(5) })
+        modeChoices.addView(creativeChoice, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(5) })
+        survivalChoice.setOnClickListener {
+            getSharedPreferences("gamer_mobile", MODE_PRIVATE).edit().putString("world_mode", "survival").apply()
+            survivalChoice.setTextColor(Color.WHITE)
+            survivalChoice.background = rounded(Color.rgb(80, 132, 171), 14)
+            creativeChoice.setTextColor(ink)
+            creativeChoice.background = rounded(Color.rgb(235, 243, 249), 14)
+            status.text = "世界模式：生存模式。派蒙将以生存、探索和资源管理为优先目标。"
+            speak("好耶！生存冒险出发啦！我们先保证安全，再收集资源、制作工具和建造小屋！")
+        }
+        creativeChoice.setOnClickListener {
+            getSharedPreferences("gamer_mobile", MODE_PRIVATE).edit().putString("world_mode", "creative").apply()
+            creativeChoice.setTextColor(Color.WHITE)
+            creativeChoice.background = rounded(Color.rgb(80, 132, 171), 14)
+            survivalChoice.setTextColor(ink)
+            survivalChoice.background = rounded(Color.rgb(235, 243, 249), 14)
+            status.text = "世界模式：创造模式。自主目标将偏向探索和建筑创作。"
+            speak("创造模式开启！这次我们来建造一个超棒的世界吧！")
+        }
+        val savedMode = getSharedPreferences("gamer_mobile", MODE_PRIVATE).getString("world_mode", "survival")
+        if (savedMode == "creative") creativeChoice.performClick()
+        else getSharedPreferences("gamer_mobile", MODE_PRIVATE).edit().putString("world_mode", "survival").apply()
+        worldPanel.addView(modeChoices)
+        page.addView(worldPanel, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+
         val start = TextView(this).apply {
             text = "开启冒险"
             textSize = 23f
