@@ -11,6 +11,13 @@ Gamer-Mobile 是基于 Gamer 开源研究项目开发的 Android 手机版 AI �
 - **Shared action protocol:** model outputs are validated before any action is offered to the Android interaction layer.
 - **User control:** visible start/stop state, explicit screen-capture consent, and an accessibility service that the user must enable manually. No hidden capture or automatic permission bypass.
 
+## Autonomous play defaults
+
+- **Default world mode: Survival.** When no voice command is given, the intended agent behavior is to continue autonomous survival play: observe the world, explore, seek safety, gather resources, craft tools, manage inventory, and work toward shelter/building goals.
+- **Creative mode:** an optional alternative focused on exploration and construction.
+- **Voice commands:** explicit user commands temporarily take priority over autonomous goals; a stop command must halt agent-issued actions. After a task is completed, the agent may resume autonomous play if the user has not paused it.
+- These are product requirements and UI configuration in the current prototype. Actual autonomous gameplay still requires a compatible game-specific perception/action adapter and an integrated inference agent; it is not implemented by this setting alone.
+
 ## Current scaffold
 
 The `android/` directory contains a minimal Kotlin Android application shell with mode selection and setup guidance. Screen capture, remote inference, local inference, and game input are integration tasks and are not represented as complete features yet.
