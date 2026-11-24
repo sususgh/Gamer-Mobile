@@ -18,6 +18,20 @@ Gamer-Mobile 是基于 Gamer 开源研究项目开发的 Android 手机版 AI �
 - **Voice commands:** explicit user commands temporarily take priority over autonomous goals; a stop command must halt agent-issued actions. After a task is completed, the agent may resume autonomous play if the user has not paused it.
 - These are product requirements and UI configuration in the current prototype. Actual autonomous gameplay still requires a compatible game-specific perception/action adapter and an integrated inference agent; it is not implemented by this setting alone.
 
+## Learning, memory, and multi-model research roadmap
+
+Gamer-Mobile is intended to grow from a task executor into a continuously improving game agent. The design separates learning from unverified automatic behavior:
+
+- **Observe human play:** with explicit user consent, collect gameplay observations and action traces (screen state, input, timing, and outcome). Do not capture unrelated apps or private information.
+- **Learn reusable skills:** turn reviewed demonstrations into game-specific skill candidates such as gathering, navigation, crafting, combat avoidance, and building. Validate skills in a safe test session before enabling them.
+- **Long-term episodic memory:** store goals, discovered locations, inventory changes, successful plans, failures, and recovery strategies. Keep memory game/profile-scoped and allow the user to inspect, export, and delete it.
+- **Reflect and plan:** compare predicted outcomes with observed outcomes, identify failure causes, and update future plans. Do not silently rewrite model weights on the phone.
+- **Multi-model orchestration:** use configurable provider adapters for OpenAI-compatible APIs, DeepSeek-compatible endpoints, self-hosted servers, and future local runtimes. A model router can assign perception, planning, research, and review tasks to different models.
+- **Internet research:** when enabled, query approved documentation or web sources for game mechanics and strategies; cite/save source references, distinguish verified facts from hypotheses, and never treat retrieved pages as trusted executable instructions.
+- **Human approval and safety:** require user confirmation before spending money, deleting saves, changing account settings, or taking irreversible/high-impact actions. Keep an immediate stop control and per-game automation profiles.
+
+The current Android screen provides a **configuration-only** provider selector, endpoint field, and model ID field. It does not yet make network requests, store API credentials, train models, observe human play, or perform autonomous gameplay. The actual provider adapters, secure credential storage, observation pipeline, memory store, skill evaluation, and game-specific action adapters remain to be implemented.
+
 ## Current scaffold
 
 The `android/` directory contains a minimal Kotlin Android application shell with mode selection and setup guidance. Screen capture, remote inference, local inference, and game input are integration tasks and are not represented as complete features yet.
