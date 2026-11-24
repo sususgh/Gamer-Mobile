@@ -3,7 +3,6 @@ package com.sususgh.gamermobile
 import android.app.Activity
 import android.os.Bundle
 import android.graphics.Typeface
-import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
@@ -11,6 +10,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 
 class MainActivity : Activity() {
+    private lateinit var status: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -19,6 +20,12 @@ class MainActivity : Activity() {
             setPadding(24, 32, 24, 24)
         }
         val scroll = ScrollView(this).apply { addView(content) }
+
+        status = TextView(this).apply {
+            text = "等待选择运行模式"
+            textSize = 15f
+            setPadding(0, 8, 0, 12)
+        }
 
         content.addView(TextView(this).apply {
             text = "Gamer Mobile"
@@ -60,8 +67,6 @@ class MainActivity : Activity() {
         setContentView(scroll)
     }
 
-    private lateinit var status: TextView
-
     private fun section(value: String) = TextView(this).apply {
         text = value
         textSize = 18f
@@ -83,18 +88,5 @@ class MainActivity : Activity() {
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { bottomMargin = 8 }
-    }
-
-    companion object {
-        private val statusPlaceholder = "等待选择运行模式"
-    }
-
-    init {
-        status = TextView(this).apply {
-            text = statusPlaceholder
-            textSize = 15f
-            gravity = Gravity.START
-            setPadding(0, 8, 0, 12)
-        }
     }
 }
