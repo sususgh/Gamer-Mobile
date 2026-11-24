@@ -51,3 +51,8 @@ Open `android/` in Android Studio (current stable version), allow Gradle sync, t
 ## License and attribution
 
 The original archive includes Apache License 2.0. Preserve its LICENSE and upstream attribution when importing the original materials. This new Android scaffold is separately authored and intended to remain under Apache-2.0, subject to retaining required upstream notices for any copied upstream code or assets.
+
+
+## Game compatibility
+
+See [Android game compatibility and validation strategy](docs/game-compatibility.md). The listed games are test candidates, not certified working integrations.
