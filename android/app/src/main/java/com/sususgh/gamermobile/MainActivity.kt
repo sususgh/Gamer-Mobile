@@ -1,6 +1,15 @@
 package com.sususgh.gamermobile
 
 import android.app.Activity
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.RecognitionListener
+import android.speech.tts.TextToSpeech
+import android.os.Build
+import java.util.Locale
 import android.os.Bundle
 import android.graphics.*
 import android.graphics.drawable.GradientDrawable
@@ -16,9 +25,16 @@ class MainActivity : Activity() {
     private val gold = Color.rgb(213, 181, 116)
     private lateinit var mascot: MascotView
     private lateinit var status: TextView
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var textToSpeech: TextToSpeech? = null
+    private var ttsReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        textToSpeech = TextToSpeech(this) { result ->
+            ttsReady = result == TextToSpeech.SUCCESS
+            if (ttsReady) textToSpeech?.language = Locale.SIMPLIFIED_CHINESE
+        }
         window.statusBarColor = Color.rgb(238, 247, 253)
         window.navigationBarColor = Color.rgb(238, 247, 253)
         window.decorView.systemUiVisibility =
@@ -93,6 +109,40 @@ class MainActivity : Activity() {
         })
         welcome.addView(speech)
         page.addView(welcome)
+
+        // Push-to-talk voice companion: the user explicitly taps the microphone.
+        val voicePanel = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = rounded(Color.WHITE, 20)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+        }
+        val voiceCopy = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        voiceCopy.addView(TextView(this).apply {
+            text = "和小伙伴说句话"
+            textSize = 16f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(ink)
+        })
+        voiceCopy.addView(TextView(this).apply {
+            text = "点击麦克风，说出你的游戏任务"
+            textSize = 12f
+            setTextColor(muted)
+        })
+        voicePanel.addView(voiceCopy, LinearLayout.LayoutParams(0, -2, 1f))
+        voicePanel.addView(TextView(this).apply {
+            text = "🎙"
+            textSize = 25f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            background = rounded(Color.rgb(75, 132, 184), 30)
+            setPadding(dp(15), dp(9), dp(15), dp(9))
+            isClickable = true
+            isFocusable = true
+            contentDescription = "点击开始语音识别"
+            setOnClickListener { startVoiceInput() }
+        })
+        page.addView(voicePanel, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
         // Adventure task panel, matching the supplied screenshot's blue inset panel.
         val taskPanel = LinearLayout(this).apply {
@@ -182,6 +232,108 @@ class MainActivity : Activity() {
 
         setContentView(scroll)
         mascot.startFloating()
+    }
+
+    private fun startVoiceInput() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            speak("哎呀，旅行者，这台设备暂时没有可用的语音识别服务。")
+            status.text = "设备没有可用的语音识别服务。"
+            return
+        }
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 701)
+            return
+        }
+        try {
+            if (speechRecognizer == null) {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+                speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) { status.text = "小伙伴正在听你说话……" }
+                    override fun onBeginningOfSpeech() { status.text = "听到了！继续说吧。" }
+                    override fun onRmsChanged(rmsdB: Float) {}
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+                    override fun onEndOfSpeech() { status.text = "正在理解你的指令……" }
+                    override fun onError(error: Int) {
+                        status.text = "语音识别未完成，请再试一次。"
+                        speak("欸？我没听清楚，旅行者再说一次嘛。")
+                    }
+                    override fun onResults(results: Bundle?) {
+                        val phrase = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                        if (phrase.isNullOrBlank()) {
+                            speak("旅行者，你刚才说了什么？我没有听清楚。")
+                        } else {
+                            handleVoiceCommand(phrase)
+                        }
+                    }
+                    override fun onPartialResults(partialResults: Bundle?) {}
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+            }
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-CN")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "zh-CN")
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "请说出游戏任务，例如：派蒙，去挖矿")
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            }
+            speechRecognizer?.startListening(intent)
+        } catch (e: Exception) {
+            status.text = "无法启动语音识别：${e.localizedMessage ?: "未知错误"}"
+        }
+    }
+
+    private fun handleVoiceCommand(raw: String) {
+        val command = raw.replace("派蒙", "").replace("小伙伴", "").trim()
+        val task = when {
+            command.contains("挖矿") || command.contains("矿") -> "采矿任务"
+            command.contains("建房") || command.contains("建造") || command.contains("盖房") -> "建造任务"
+            command.contains("木头") || command.contains("木材") -> "采集木材任务"
+            command.contains("跟着我") || command.contains("跟随") -> "跟随任务"
+            command.contains("回家") || command.contains("返回基地") -> "返回基地任务"
+            command.contains("停止") || command.contains("停下") || command.contains("取消") -> "停止任务"
+            command.contains("汇报") || command.contains("情况") -> "状态查询"
+            else -> null
+        }
+        if (task == null) {
+            status.text = "识别到：$raw（暂未匹配到支持的通用指令）"
+            speak("旅行者，这个指令我还没学会。你可以让我挖矿、采集木材、建造、跟随、回家或者停止。")
+            return
+        }
+        status.text = "语音识别：$raw\n任务解析：$task\n当前状态：已解析，等待接入游戏 AI 执行引擎。"
+        val reply = when (task) {
+            "采矿任务" -> "收到！我会把目标记为采矿。等游戏 AI 接入后，就能识别矿石并规划采集路线啦！"
+            "建造任务" -> "好耶！建造任务已记下。还需要游戏 AI 识别材料、地形和建造规则，才能真正动工哦！"
+            "采集木材任务" -> "木材收集任务记下啦！接入游戏代理后就去寻找树木。"
+            "跟随任务" -> "明白啦，我会把目标设为跟随玩家。"
+            "返回基地任务" -> "收到，目标设为返回基地。"
+            "停止任务" -> "收到！停止指令优先级最高。当前原型没有启动自动操作，所以没有游戏动作需要中止。"
+            else -> "旅行者，目前还没有正在执行的游戏任务。"
+        }
+        speak(reply)
+    }
+
+    private fun speak(message: String) {
+        if (ttsReady) textToSpeech?.speak(message, TextToSpeech.QUEUE_FLUSH, null, "gamer-mobile-reply")
+        else status.text = "$message（设备语音引擎尚未就绪）"
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 701 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startVoiceInput()
+        } else if (requestCode == 701) {
+            status.text = "未获得麦克风权限，无法使用语音控制。"
+        }
+    }
+
+    override fun onDestroy() {
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
+        mascot.removeCallbacksForCleanup()
+        super.onDestroy()
     }
 
     private fun roundIcon(symbol: String, size: Int, action: () -> Unit): View {
@@ -317,6 +469,7 @@ class MainActivity : Activity() {
             }
         }
         fun startFloating() { post(runner) }
+        fun removeCallbacksForCleanup() { removeCallbacks(runner) }
         fun setMood(value: Int) { mood = value; invalidate() }
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
