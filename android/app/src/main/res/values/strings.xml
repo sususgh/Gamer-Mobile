@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Gamer Mobile</string>
+    <string name="accessibility_service_label">Gamer Mobile interaction bridge</string>
+    <string name="accessibility_service_description">Optional user-enabled accessibility bridge. The prototype does not perform automated game actions yet.</string>
+</resources>
