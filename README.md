@@ -1,6 +1,6 @@
-# Gamer Mobile
+# Gamer-Mobile｜Android 手机版 AI 自动游戏智能体
 
-Android client scaffold for a hybrid AI game agent, based on the Gamer research project's documented screen-observation/action loop.
+Gamer-Mobile 是基于 Gamer 开源研究项目开发的 Android 手机版 AI 游戏智能体，目标是让 AI 通过视觉感知理解游戏画面，并自动执行触控操作。项目规划支持手机本地 AI 推理与远程 AI 推理两种模式。
 
 > **Status: prototype scaffold — not a working AI agent yet.** The supplied Gamer-main.zip contains research documentation, assets, and demo videos. It does not include the trained model weights, a complete inference server, or an Android/Windows application source tree. This repository therefore starts a new Android client and integration boundary; it does not claim to convert the original model into an APK.
 
