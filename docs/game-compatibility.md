@@ -80,3 +80,12 @@ Paimon is a persistent in-game companion persona, not a button-triggered chatbot
 - Never spend currency, make purchases, delete saves, change account/security settings or perform other irreversible actions without explicit user approval.
 
 These are product requirements. The current app remains a prototype and does not yet implement the autonomous gameplay loop, synchronized animated avatar, or task verification.
+
+
+## Successful QR pairing welcome
+
+After the Android app validates the short-lived pairing challenge, authenticates the DSH host, and completes the session handshake, transition the companion to `paired_ready`. Only after that verified state may Paimon play the pairing-success welcome line:
+
+“恭喜旅行者，匹配成功！接下来就由派蒙代替你玩游戏吧！放心交给我，我会努力探索世界、完成任务的！”
+
+Trigger the mobile avatar's happy floating/waving animation and show synchronized subtitles. The desktop companion receives the same pairing/session event and plays its matching success animation. Do not play this line merely because a QR code was decoded; invalid, expired, rejected, or unreachable pairing data must show a clear failure/retry state instead. After the welcome, start autonomous adventure only when the user has explicitly enabled automation, granted required screen/input permissions, selected a game profile, and the session health checks pass. Keep the visible pause/stop control available.
