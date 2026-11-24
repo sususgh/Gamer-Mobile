@@ -8,7 +8,7 @@ on:
       - ".github/workflows/android-release-apk.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-release:
@@ -64,9 +64,12 @@ jobs:
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose "$APK"
 
-      - name: Upload signed APK
-        uses: actions/upload-artifact@v4
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: Gamer-Mobile-release-signed
-          path: android/app/build/outputs/apk/release/app-release.apk
-          if-no-files-found: error
+          tag_name: v0.3.0
+          name: Gamer Mobile v0.3.0
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          make_latest: true
+          files: android/app/build/outputs/apk/release/app-release.apk
