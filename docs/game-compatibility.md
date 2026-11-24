@@ -46,3 +46,37 @@ Gamer-Mobile 面向 **Android 手机上的原生游戏**。它不是 PC 游戏�
 ## 当前实现状态
 
 当前项目仍是原型骨架。该文档定义开发和验收标准，不代表上述候选游戏已经实现自动操作。实际支持需要屏幕采集、传输、视觉推理、输入执行和逐游戏闭环测试全部完成。
+
+
+## Companion autonomy and dual-screen presence
+
+Paimon is a persistent in-game companion persona, not a button-triggered chatbot. The Android client and Windows DSH dashboard render the same companion identity and synchronize her activity state, current goal, short status message, mood/animation cue, and speech events. The two renderings are views of one session, not two independent agents.
+
+### Two operating modes
+
+- **Autonomous adventure is the default whenever the game session is active and no user task is pending.** The agent continuously observes the game, chooses a safe next goal, acts, checks the outcome, and replans. It should behave like a capable human player rather than remain idle waiting for prompts.
+- **Player-task mode** starts when the user gives a voice or text task. The task is added to a prioritized queue; the agent acknowledges it, works toward it, and reports progress. A task that conflicts with the current autonomous goal temporarily takes priority.
+- On verified completion, emit a completion event and a companion line such as “旅行者，我已经完成你吩咐的任务啦！”. Then return to autonomous adventure if no task remains.
+- If a task cannot be completed, report the blocker honestly, preserve progress, and ask for guidance when needed. Never announce completion based only on a model assertion; verify the game state where possible.
+
+### Survival and Creative world behavior
+
+- Respect the selected game/world mode. In Survival, prioritize safety, food/health, resource gathering, tools, shelter, navigation and then exploration/building goals. Avoid knowingly lethal actions when a safer route exists.
+- In Creative, prioritize exploration, construction plans, material/layout experimentation and user-defined creative goals; survival resource constraints may not apply.
+- The agent must infer the available mechanics from the selected game profile. Do not assume every game has Minecraft-style crafting, hunger, or building.
+
+### Dynamic Paimon presentation
+
+- Both mobile and desktop avatars should animate continuously according to a shared finite state: idle/listening, thinking, exploring, moving, interacting, task-progress, success, warning, model-switching, paused and disconnected.
+- Use animation cues and short status text tied to actual runtime events. For example, exploring animation only while an exploration action is active; thinking animation while inference is pending; success animation only after task verification.
+- The desktop dashboard may show richer activity details and event history; the phone provides compact animations and optional spoken updates.
+- Companion speech must be concise, interruptible, rate-limited and user-configurable. The Paimon persona is a presentation layer; it does not imply the model has human consciousness.
+
+### Pause, safety and recovery
+
+- A visible user stop/pause control overrides autonomous goals and queued tasks immediately.
+- On loss of connection, loss of model capability, uncertain game state or unsafe action, stop issuing new game inputs and show a warning. Resume only after recovery checks and user/session policy allow it.
+- Preserve the current goal and verified progress across model failover; the replacement model must receive a compact state summary before continuing.
+- Never spend currency, make purchases, delete saves, change account/security settings or perform other irreversible actions without explicit user approval.
+
+These are product requirements. The current app remains a prototype and does not yet implement the autonomous gameplay loop, synchronized animated avatar, or task verification.
