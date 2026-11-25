@@ -67,9 +67,20 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.3.0
-          name: Gamer Mobile v0.3.0
+          tag_name: v0.3.0-preview
+          name: Gamer Mobile v0.3.0-preview
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          make_latest: true
+          prerelease: true
+          make_latest: false
+          body: |
+            > **预览版说明 / Preview notice**：当前版本是配置界面原型，用于验证签名发布流程与界面预览，**尚不是可用的 AI 游戏助手**。
+
+            已包含：应用主界面、AI 服务提供方配置入口、屏幕捕获授权引导、无障碍服务设置引导。
+
+            尚未实现（当前版本不包含）：真实模型推理、网络请求、自动游戏操作、长期记忆与学习。
+
+            安装：下载下方 `app-release.apk`，在安卓手机上允许"安装未知来源应用"后安装。需要 Android 8.0（API 26）及以上。
+
+            签名：使用项目自签名证书，有效期至 2056 年；后续正式版本请使用同一密钥，以保证可覆盖升级。
           files: android/app/build/outputs/apk/release/app-release.apk
