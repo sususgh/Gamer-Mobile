@@ -5,6 +5,8 @@ import android.app.AlertDialog
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import com.google.zxing.integration.android.IntentIntegrator
+import com.google.zxing.integration.android.IntentResult
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.RecognitionListener
@@ -158,6 +160,9 @@ class MainActivity : Activity() {
             setTextColor(ink)
             setPadding(dp(4), 0, 0, dp(8))
         })
+        taskPanel.addView(taskCard("▦", "扫描电脑端配对二维码") {
+            startQrScanner()
+        })
         taskPanel.addView(taskCard("▣", "AI 模型管理") {
             showModelSetupDialog()
         })
@@ -302,6 +307,45 @@ class MainActivity : Activity() {
         mascot.startFloating()
     }
 
+    private fun startQrScanner() {
+        try {
+            val integrator = IntentIntegrator(this)
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+            integrator.setPrompt("将电脑端 Gamer 配对二维码放入取景框")
+            integrator.setBeepEnabled(false)
+            integrator.setBarcodeImageEnabled(false)
+            integrator.setOrientationLocked(false)
+            integrator.initiateScan()
+        } catch (e: Exception) {
+            showToast("无法启动二维码扫描器：" + (e.localizedMessage ?: "请检查摄像头权限"))
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val scanResult: IntentResult? = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (scanResult != null) {
+            val contents = scanResult.contents
+            if (contents.isNullOrBlank()) {
+                status.text = "已取消二维码扫描。"
+            } else {
+                AlertDialog.Builder(this)
+                    .setTitle("识别到配对二维码")
+                    .setMessage("二维码内容：\\n\\n" + contents + "\\n\\n确认保存此配对信息？请只扫描你信任的电脑端二维码。")
+                    .setNegativeButton("取消", null)
+                    .setPositiveButton("确认保存") { _, _ ->
+                        getSharedPreferences("gamer_mobile", MODE_PRIVATE).edit()
+                            .putString("last_pairing_qr_payload", contents)
+                            .putLong("last_pairing_qr_scanned_at", System.currentTimeMillis())
+                            .apply()
+                        status.text = "二维码已识别并保存。当前版本尚未实现电脑端握手协议，设备连接仍待接入。"
+                        showToast("配对二维码已保存；等待电脑端连接协议接入。")
+                    }
+                    .show()
+            }
+            return
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
     private fun showPaimonVoiceDownloadDialog() {
         val message = TextView(this).apply {
             text = "为派蒙获取基于《原神》游戏语音训练的 VITS 音色模型。模型文件较大（上游项目标注约 417 MB），请在下载页查看最新文件、配置与校验信息。\n\n授权提醒：上游项目将派蒙语音权重标注为个人、非商业使用。请勿用于商业用途或未经许可重新分发。下载后还需要适配 Android 推理格式；当前按钮提供模型来源入口，不会伪称已经安装或启用。"
