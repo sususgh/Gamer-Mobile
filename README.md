@@ -31,7 +31,7 @@ Gamer-Mobile is intended to grow from a task executor into a continuously improv
 - **Internet research:** when enabled, query approved documentation or web sources for game mechanics and strategies; cite/save source references, distinguish verified facts from hypotheses, and never treat retrieved pages as trusted executable instructions.
 - **Human approval and safety:** require user confirmation before spending money, deleting saves, changing account settings, or taking irreversible/high-impact actions. Keep an immediate stop control and per-game automation profiles.
 
-The current Android screen provides a **configuration-only** provider selector, endpoint field, and model ID field. It does not yet make network requests, store API credentials, train models, observe human play, or perform autonomous gameplay. The actual provider adapters, secure credential storage, desktop pairing handshake, observation pipeline, memory store, skill evaluation, and game-specific action adapters remain to be implemented.
+The current Android screen provides a **configuration-only** provider selector, endpoint field, and model ID field. The Paimon voice dialogue screen can use Android system Chinese TTS for immediate on-phone speech and the device speech recognizer for microphone input; this is a fallback voice, not the original Paimon voice. It does not yet make network requests, store API credentials, train models, observe human play, or perform autonomous gameplay. The actual provider adapters, secure credential storage, desktop pairing handshake, original Paimon voice model conversion/runtime for Android, observation pipeline, memory store, skill evaluation, and game-specific action adapters remain to be implemented.
 
 ## Current scaffold
 
