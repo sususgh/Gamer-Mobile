@@ -161,6 +161,9 @@ class MainActivity : Activity() {
         taskPanel.addView(taskCard("▣", "AI 模型管理") {
             showModelSetupDialog()
         })
+        taskPanel.addView(taskCard("♫", "派蒙语音模型下载") {
+            showPaimonVoiceDownloadDialog()
+        })
         taskPanel.addView(taskCard("⌘", "游戏自动代理") {
             showToast("游戏自动代理尚未接通屏幕识别与 AI 动作引擎。")
         })
@@ -297,6 +300,29 @@ class MainActivity : Activity() {
 
         setContentView(scroll)
         mascot.startFloating()
+    }
+
+    private fun showPaimonVoiceDownloadDialog() {
+        val message = TextView(this).apply {
+            text = "为派蒙获取基于《原神》游戏语音训练的 VITS 音色模型。模型文件较大（上游项目标注约 417 MB），请在下载页查看最新文件、配置与校验信息。\n\n授权提醒：上游项目将派蒙语音权重标注为个人、非商业使用。请勿用于商业用途或未经许可重新分发。下载后还需要适配 Android 推理格式；当前按钮提供模型来源入口，不会伪称已经安装或启用。"
+            textSize = 14f
+            setTextColor(ink)
+            setPadding(dp(20), dp(8), dp(20), dp(8))
+            setLineSpacing(dp(4).toFloat(), 1f)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("派蒙原声模型")
+            .setView(message)
+            .setNegativeButton("稍后", null)
+            .setPositiveButton("打开模型下载页") { _, _ ->
+                val url = "https://github.com/gaaiyun/ai-paimon"
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+                } catch (_: Exception) {
+                    showToast("无法打开下载页，请稍后重试。")
+                }
+            }
+            .show()
     }
 
     private fun showModelSetupDialog() {
