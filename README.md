@@ -57,3 +57,12 @@ The original archive includes Apache License 2.0. Preserve its LICENSE and upstr
 ## Game compatibility
 
 See [Android game compatibility and validation strategy](docs/game-compatibility.md). The listed games are test candidates, not certified working integrations.
+
+
+## Real Paimon character UI assets
+
+The former hand-drawn mascot has been removed. The Android UI now renders animated Paimon assets only:
+- `android/app/src/main/assets/paimon/idle.gif` — genuine Paimon idle animation.
+- `android/app/src/main/assets/paimon/talk.gif` — genuine Paimon talking animation.
+
+The app animates the supplied GIF frames and adds a gentle floating motion; voice activity switches between idle and talking assets. **These source animation files are not included yet** because the repository does not currently contain verified, authorized Paimon animation assets. Without those files, the character area remains empty rather than displaying a fake replacement. Add assets you have permission to use before claiming the real-character UI is complete. A full in-game 3D Paimon model/rig is a separate integration and is not provided by these GIF slots.
