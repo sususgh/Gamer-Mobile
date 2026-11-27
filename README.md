@@ -10,6 +10,7 @@ Gamer-Mobile 是基于 Gamer 开源研究项目开发的 Android 手机版 AI �
 - **Remote mode:** Android sends observations to a user-configured, authenticated inference endpoint and receives structured actions.
 - **Shared action protocol:** model outputs are validated before any action is offered to the Android interaction layer.
 - **User control:** visible start/stop state, explicit screen-capture consent, and an accessibility service that the user must enable manually. No hidden capture or automatic permission bypass.
+- **Desktop pairing scanner:** the Android app can open the camera QR scanner, decode a desktop pairing QR code, and ask the user to confirm before saving its payload. The desktop handshake and live two-device connection protocol are not yet implemented.
 
 ## Autonomous play defaults
 
@@ -30,11 +31,11 @@ Gamer-Mobile is intended to grow from a task executor into a continuously improv
 - **Internet research:** when enabled, query approved documentation or web sources for game mechanics and strategies; cite/save source references, distinguish verified facts from hypotheses, and never treat retrieved pages as trusted executable instructions.
 - **Human approval and safety:** require user confirmation before spending money, deleting saves, changing account settings, or taking irreversible/high-impact actions. Keep an immediate stop control and per-game automation profiles.
 
-The current Android screen provides a **configuration-only** provider selector, endpoint field, and model ID field. It does not yet make network requests, store API credentials, train models, observe human play, or perform autonomous gameplay. The actual provider adapters, secure credential storage, observation pipeline, memory store, skill evaluation, and game-specific action adapters remain to be implemented.
+The current Android screen provides a **configuration-only** provider selector, endpoint field, and model ID field. It does not yet make network requests, store API credentials, train models, observe human play, or perform autonomous gameplay. The actual provider adapters, secure credential storage, desktop pairing handshake, observation pipeline, memory store, skill evaluation, and game-specific action adapters remain to be implemented.
 
 ## Current scaffold
 
-The `android/` directory contains a minimal Kotlin Android application shell with mode selection and setup guidance. Screen capture, remote inference, local inference, and game input are integration tasks and are not represented as complete features yet.
+The `android/` directory contains a Kotlin Android application shell with mode selection, setup guidance, and a camera-based QR scanner. Minimum supported Android version is Android 10 (API 29). Screen capture, remote inference, local inference, and game input are integration tasks and are not represented as complete features yet.
 
 ## Build
 
