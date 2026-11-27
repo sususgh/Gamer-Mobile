@@ -89,3 +89,10 @@ After the Android app validates the short-lived pairing challenge, authenticates
 “恭喜旅行者，匹配成功！接下来就由派蒙代替你玩游戏吧！放心交给我，我会努力探索世界、完成任务的！”
 
 Trigger the mobile avatar's happy floating/waving animation and show synchronized subtitles. The desktop companion receives the same pairing/session event and plays its matching success animation. Do not play this line merely because a QR code was decoded; invalid, expired, rejected, or unreachable pairing data must show a clear failure/retry state instead. After the welcome, start autonomous adventure only when the user has explicitly enabled automation, granted required screen/input permissions, selected a game profile, and the session health checks pass. Keep the visible pause/stop control available.
+
+
+## Foreground game auto-detection (prototype)
+
+The opt-in Android accessibility service can recognize Minecraft Bedrock (package ID com.mojang.minecraftpe), common Genshin Impact package IDs, and other apps that Android labels with the GAME application category. It stores the detected app name/package and routes the UI to a game profile (minecraft, genshin, or generic game). Minecraft's Survival/Creative selector is scoped to the Minecraft profile. Package/category detection is not visual game understanding and does not prove that the AI can play the game.
+
+**Not yet implemented:** game-specific vision, control layouts, model prompts, action adapters, closed-loop success verification, and live autonomous play. Genshin and other games are detected/routed only; they are not yet playable by the AI. Android may require the user to enable the accessibility service manually in Settings. Some game launchers or cloned packages may need additional package IDs.
