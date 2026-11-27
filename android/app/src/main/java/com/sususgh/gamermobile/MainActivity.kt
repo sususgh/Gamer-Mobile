@@ -14,7 +14,7 @@ import android.speech.tts.TextToSpeech
 import android.os.Build
 import java.util.Locale
 import android.os.Bundle
-import android.graphics.*
+import android.graphics.*\nimport android.graphics.Movie
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
@@ -26,7 +26,7 @@ class MainActivity : Activity() {
     private val ink = Color.rgb(48, 82, 111)
     private val muted = Color.rgb(105, 132, 153)
     private val gold = Color.rgb(213, 181, 116)
-    private lateinit var mascot: MascotView
+    private lateinit var mascot: PaimonView
     private lateinit var status: TextView
     private var speechRecognizer: SpeechRecognizer? = null
     private var textToSpeech: TextToSpeech? = null
@@ -86,7 +86,7 @@ class MainActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(dp(126), dp(142))
             clipToOutline = true
         }
-        mascot = MascotView(this)
+        mascot = PaimonView(this)
         mascotCard.addView(mascot, FrameLayout.LayoutParams(-1, -1))
         welcome.addView(mascotCard)
 
@@ -725,69 +725,83 @@ class MainActivity : Activity() {
     }
 
     // A small original star-fairy mascot with a gentle floating idle animation.
-    private class MascotView(context: android.content.Context) : View(context) {
-        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    /**
+     * Renders the REAL Paimon animation supplied in app/src/main/assets/paimon/.
+     * No hand-drawn substitute is rendered when the licensed/source animation is absent.
+     * idle.gif and talk.gif must contain genuine Paimon animation frames.
+     */
+    private class PaimonView(context: android.content.Context) : View(context) {
+        private var talking = false
+        private var movie: Movie? = null
         private var phase = 0f
-        private var mood = 0
+        private var assetAvailable = false
         private val runner = object : Runnable {
             override fun run() {
-                phase += .08f
+                phase += .035f
                 invalidate()
-                postDelayed(this, 45)
+                postDelayed(this, 33)
             }
         }
-        fun startFloating() { post(runner) }
-        fun removeCallbacksForCleanup() { removeCallbacks(runner) }
-        fun setMood(value: Int) { mood = value; invalidate() }
+
+        init {
+            loadAnimation()
+            post(runner)
+        }
+
+        fun setMood(value: Int) {
+            val nextTalking = value == 1
+            if (talking != nextTalking) {
+                talking = nextTalking
+                loadAnimation()
+                invalidate()
+            }
+        }
+
+        fun startFloating() {
+            if (!isAttachedToWindow) post(runner)
+        }
+
+        fun removeCallbacksForCleanup() {
+            removeCallbacks(runner)
+        }
+
+        private fun loadAnimation() {
+            val file = if (talking) "paimon/talk.gif" else "paimon/idle.gif"
+            movie = try {
+                context.assets.open(file).use { Movie.decodeStream(it) }
+            } catch (_: Exception) {
+                null
+            }
+            assetAvailable = movie != null
+        }
+
+        override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
+            post(runner)
+        }
+
+        override fun onDetachedFromWindow() {
+            removeCallbacks(runner)
+            super.onDetachedFromWindow()
+        }
+
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
-            val cx = width/2f
-            val cy = height*.49f + sin(phase).toFloat()*dp(4f)
-            val s = minOf(width, height).toFloat()
-            // tiny golden halo
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = dp(2f)
-            paint.color = Color.rgb(219, 190, 123)
-            canvas.drawOval(cx-s*.19f, cy-s*.39f, cx+s*.19f, cy-s*.31f, paint)
-            paint.style = Paint.Style.FILL
-            // cape / little body
-            paint.color = Color.rgb(76, 111, 145)
-            val cape = Path().apply {
-                moveTo(cx-s*.13f,cy+s*.13f); quadTo(cx-s*.32f,cy+s*.36f,cx-s*.04f,cy+s*.42f)
-                quadTo(cx+s*.20f,cy+s*.34f,cx+s*.14f,cy+s*.13f); close()
-            }
-            canvas.drawPath(cape,paint)
-            // hair
-            paint.color = Color.rgb(242, 235, 220)
-            canvas.drawCircle(cx,cy-s*.10f,s*.22f,paint)
-            // face
-            paint.color = Color.rgb(255, 224, 190)
-            canvas.drawOval(cx-s*.15f,cy-s*.18f,cx+s*.15f,cy+s*.13f,paint)
-            // hair cap and side locks
-            paint.color = Color.rgb(250, 247, 237)
-            canvas.drawCircle(cx,cy-s*.20f,s*.17f,paint)
-            canvas.drawOval(cx-s*.25f,cy-s*.17f,cx-s*.13f,cy+s*.15f,paint)
-            canvas.drawOval(cx+s*.13f,cy-s*.17f,cx+s*.25f,cy+s*.15f,paint)
-            // eyes
-            paint.color = Color.rgb(49, 82, 112)
-            canvas.drawOval(cx-s*.085f,cy-s*.035f,cx-s*.035f,cy+s*.055f,paint)
-            canvas.drawOval(cx+s*.035f,cy-s*.035f,cx+s*.085f,cy+s*.055f,paint)
-            // star ornament
-            paint.color = Color.rgb(225, 190, 112)
-            val star = Path().apply {
-                moveTo(cx,cy-s*.34f); lineTo(cx+s*.035f,cy-s*.27f); lineTo(cx+s*.10f,cy-s*.26f)
-                lineTo(cx+s*.05f,cy-s*.21f); lineTo(cx+s*.06f,cy-s*.15f)
-                lineTo(cx,cy-s*.19f); lineTo(cx-s*.06f,cy-s*.15f)
-                lineTo(cx-s*.05f,cy-s*.21f); lineTo(cx-s*.10f,cy-s*.26f)
-                lineTo(cx-s*.035f,cy-s*.27f); close()
-            }
-            canvas.drawPath(star,paint)
-            if (mood == 1) {
-                paint.color = Color.rgb(221, 166, 115)
-                canvas.drawCircle(cx,cy+s*.08f,dp(3f),paint)
-            }
+            val animation = movie ?: return
+            val duration = animation.duration().takeIf { it > 0 } ?: 1000
+            animation.setTime((System.currentTimeMillis() % duration).toInt())
+            val baseScale = minOf(width.toFloat() / animation.width(), height.toFloat() / animation.height())
+            val scale = baseScale * .92f
+            val drawW = animation.width() * scale
+            val drawH = animation.height() * scale
+            val bob = sin(phase).toFloat() * resources.displayMetrics.density * 4f
+            canvas.save()
+            canvas.translate((width - drawW) / 2f, (height - drawH) / 2f + bob)
+            canvas.scale(scale, scale)
+            animation.draw(canvas, 0f, 0f)
+            canvas.restore()
+            postInvalidateDelayed(33)
         }
-        private fun dp(v: Float) = v * resources.displayMetrics.density
     }
 
     private class WaveView(context: android.content.Context) : View(context) {
