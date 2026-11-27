@@ -49,6 +49,15 @@ jobs:
         with:
           gradle-version: "8.9"
 
+      - name: Read app version
+        id: app-version
+        working-directory: android
+        run: |
+          VERSION_NAME="$(sed -n 's/^[[:space:]]*versionName = "\\([^"]*\\)"/\\1/p' app/build.gradle.kts | head -n 1)"
+          test -n "$VERSION_NAME"
+          echo "RELEASE_TAG=v$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "APP_VERSION=$VERSION_NAME" >> "$GITHUB_ENV"
+
       - name: Build signed release APK
         working-directory: android
         env:
@@ -67,20 +76,20 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.3.0-preview
-          name: Gamer Mobile v0.3.0-preview
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Gamer Mobile ${{ env.APP_VERSION }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
           prerelease: true
           make_latest: false
           body: |
-            > **预览版说明 / Preview notice**：当前版本是配置界面原型，用于验证签名发布流程与界面预览，**尚不是可用的 AI 游戏助手**。
+            > **预览版说明 / Preview notice**：本版本继续作为 Android 集成预览版发布，**尚不是完整可用的 AI 游戏助手**。
 
-            已包含：应用主界面、AI 服务提供方配置入口、屏幕捕获授权引导、无障碍服务设置引导。
+            已包含：应用主界面、AI 服务提供方配置入口、屏幕捕获授权引导、无障碍服务设置引导，以及派蒙语音模型上游下载入口（打开社区项目页面）。
 
-            尚未实现（当前版本不包含）：真实模型推理、网络请求、自动游戏操作、长期记忆与学习。
+            尚未实现：Android 本地派蒙 VITS 推理、派蒙宠物动态、真实模型推理、远程 AI 请求和自动游戏操作。模型权重需用户按上游说明另行获取；当前 APK 不包含 paimon.pth，也不代表模型已安装。
 
             安装：下载下方 `app-release.apk`，在安卓手机上允许"安装未知来源应用"后安装。需要 Android 8.0（API 26）及以上。
 
-            签名：使用项目自签名证书，有效期至 2056 年；后续正式版本请使用同一密钥，以保证可覆盖升级。
+            签名：使用项目自签名证书；升级安装需沿用同一签名密钥。派蒙语音模型上游：https://github.com/gaaiyun/ai-paimon （请遵守上游个人、非商业使用限制）。
           files: android/app/build/outputs/apk/release/app-release.apk
