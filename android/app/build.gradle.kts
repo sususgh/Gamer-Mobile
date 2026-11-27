@@ -43,3 +43,7 @@ android {
         jvmTarget = "17"
     }
 }
+
+dependencies {
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+}
