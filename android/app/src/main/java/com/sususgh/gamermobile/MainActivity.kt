@@ -169,8 +169,8 @@ class MainActivity : Activity() {
         taskPanel.addView(taskCard("♫", "打开派蒙语音对话") {
             showPaimonVoiceDialog()
         })
-        taskPanel.addView(taskCard("⌘", "游戏自动代理") {
-            showToast("游戏自动代理尚未接通屏幕识别与 AI 动作引擎。")
+        taskPanel.addView(taskCard("⌘", "自动识别当前游戏") {
+            showGameAutoDialog()
         })
         taskPanel.addView(taskCard("▱", "实时运行状态") {
             showToast("连接真实推理服务后，这里将显示运行状态和网络指标。")
@@ -184,13 +184,13 @@ class MainActivity : Activity() {
             setPadding(dp(14), dp(12), dp(14), dp(12))
         }
         worldPanel.addView(TextView(this).apply {
-            text = "世界模式"
+            text = "Minecraft 世界模式"
             textSize = 17f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(ink)
         })
         worldPanel.addView(TextView(this).apply {
-            text = "默认模式：生存模式 · 派蒙会主动探索、收集资源并努力生存"
+            text = "仅在识别到《我的世界》时生效：生存 / 创造模式"
             textSize = 12f
             setTextColor(muted)
             setPadding(0, dp(4), 0, dp(9))
@@ -346,6 +346,73 @@ class MainActivity : Activity() {
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
+    private fun showGameAutoDialog() {
+        val prefs = getSharedPreferences("gamer_mobile", MODE_PRIVATE)
+        val name = prefs.getString("detected_game_name", null)
+        val packageName = prefs.getString("detected_game_package", null)
+        val kind = prefs.getString("detected_game_kind", "unknown")
+        val mode = prefs.getString("world_mode", "survival") ?: "survival"
+        val gameStatus = when {
+            name == null -> "尚未检测到游戏。请先开启无障碍服务，并打开一款游戏。"
+            kind == "minecraft" -> "已识别《我的世界》：将使用 Minecraft 专属 AI 配置。"
+            kind == "genshin" -> "已识别《原神》：将切换到原神 AI 配置。"
+            kind == "game" -> "已识别游戏：$name。将交由通用游戏 AI 适配器处理。"
+            else -> "当前前台应用：$name（暂未匹配专属游戏配置）。"
+        }
+        val modePicker = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
+                arrayOf("生存模式", "创造模式"))
+            setSelection(if (mode == "creative") 1 else 0)
+            isEnabled = kind == "minecraft"
+        }
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(TextView(this@MainActivity).apply {
+                text = gameStatus + (if (!packageName.isNullOrBlank()) "\n包名：$packageName" else "")
+                textSize = 14f
+                setTextColor(ink)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = "Minecraft 世界模式"
+                textSize = 14f
+                setTextColor(muted)
+                setPadding(0, dp(12), 0, dp(4))
+            })
+            addView(modePicker)
+            addView(TextView(this@MainActivity).apply {
+                text = "说明：自动识别依赖用户主动启用的 Android 无障碍服务。当前版本可识别游戏并切换配置；真正自动游玩仍需接入屏幕视觉模型、游戏动作适配器和 AI 推理服务。"
+                textSize = 12f
+                setTextColor(muted)
+                setPadding(0, dp(10), 0, 0)
+            })
+        }
+        AlertDialog.Builder(this)
+            .setTitle("游戏识别与 AI 控制")
+            .setView(body)
+            .setNegativeButton("关闭", null)
+            .setPositiveButton("保存 Minecraft 模式") { _, _ ->
+                if (kind == "minecraft") {
+                    val selected = if (modePicker.selectedItemPosition == 1) "creative" else "survival"
+                    prefs.edit().putString("world_mode", selected).apply()
+                    status.text = "Minecraft 模式已设为：${if (selected == "creative") "创造模式" else "生存模式"}"
+                    speak(if (selected == "creative") "创造模式切换好啦！" else "生存模式切换好啦！")
+                } else {
+                    showToast("只有识别到《我的世界》时，才会应用这项模式设置。")
+                }
+            }
+            .show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::status.isInitialized) {
+            val prefs = getSharedPreferences("gamer_mobile", MODE_PRIVATE)
+            val detected = prefs.getString("detected_game_name", null)
+            if (!detected.isNullOrBlank()) status.text = "当前识别游戏：$detected"
+        }
+    }
+
     private fun showPaimonVoiceDialog() {
         val input = EditText(this).apply {
             hint = "输入想让派蒙说的话"
