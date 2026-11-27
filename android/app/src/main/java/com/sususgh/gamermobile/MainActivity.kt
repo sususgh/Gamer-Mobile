@@ -166,8 +166,8 @@ class MainActivity : Activity() {
         taskPanel.addView(taskCard("▣", "AI 模型管理") {
             showModelSetupDialog()
         })
-        taskPanel.addView(taskCard("♫", "派蒙语音模型下载") {
-            showPaimonVoiceDownloadDialog()
+        taskPanel.addView(taskCard("♫", "打开派蒙语音对话") {
+            showPaimonVoiceDialog()
         })
         taskPanel.addView(taskCard("⌘", "游戏自动代理") {
             showToast("游戏自动代理尚未接通屏幕识别与 AI 动作引擎。")
@@ -346,24 +346,37 @@ class MainActivity : Activity() {
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
-    private fun showPaimonVoiceDownloadDialog() {
-        val message = TextView(this).apply {
-            text = "为派蒙获取基于《原神》游戏语音训练的 VITS 音色模型。模型文件较大（上游项目标注约 417 MB），请在下载页查看最新文件、配置与校验信息。\n\n授权提醒：上游项目将派蒙语音权重标注为个人、非商业使用。请勿用于商业用途或未经许可重新分发。下载后还需要适配 Android 推理格式；当前按钮提供模型来源入口，不会伪称已经安装或启用。"
-            textSize = 14f
-            setTextColor(ink)
-            setPadding(dp(20), dp(8), dp(20), dp(8))
-            setLineSpacing(dp(4).toFloat(), 1f)
+    private fun showPaimonVoiceDialog() {
+        val input = EditText(this).apply {
+            hint = "输入想让派蒙说的话"
+            setText("你好呀旅行者！派蒙来陪你聊天啦！")
+            minLines = 2
+            gravity = Gravity.TOP
+        }
+        val note = TextView(this).apply {
+            text = "手机语音对话已内置：可直接输入文字让手机朗读，也可使用麦克风进行语音输入。注意：当前朗读使用 Android 系统中文语音，不是派蒙原声模型。上游 paimon.pth 是桌面端 Python/VITS 权重，尚无经验证的 Android 可直接加载模型包；不能把 .pth 下载到手机就当作能运行。"
+            textSize = 13f
+            setTextColor(muted)
+            setPadding(0, dp(8), 0, dp(12))
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(note)
+            addView(input)
         }
         AlertDialog.Builder(this)
-            .setTitle("派蒙原声模型")
-            .setView(message)
-            .setNegativeButton("稍后", null)
-            .setPositiveButton("打开模型下载页") { _, _ ->
-                val url = "https://github.com/gaaiyun/ai-paimon"
-                try {
-                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)))
-                } catch (_: Exception) {
-                    showToast("无法打开下载页，请稍后重试。")
+            .setTitle("派蒙 · 手机语音对话")
+            .setView(layout)
+            .setNeutralButton("🎙 语音输入") { _, _ -> startVoiceInput() }
+            .setNegativeButton("关闭", null)
+            .setPositiveButton("🔊 让派蒙说话") { _, _ ->
+                val message = input.text.toString().trim()
+                if (message.isNotEmpty()) {
+                    status.text = "派蒙正在说话：$message"
+                    speak(message)
+                } else {
+                    showToast("先输入一句想让派蒙说的话。")
                 }
             }
             .show()
