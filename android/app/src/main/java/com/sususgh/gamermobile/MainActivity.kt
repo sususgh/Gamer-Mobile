@@ -67,7 +67,10 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
         }, LinearLayout.LayoutParams(0, dp(52), 1f))
         header.addView(roundIcon("✎", 48) { showToast("编辑冒险主页") })
-        header.addView(roundIcon("⋮", 42) { showToast("更多设置") })
+        header.addView(roundIcon("▦", 48) { startQrScanner() }.apply {
+            contentDescription = "扫描电脑端配对二维码"
+            isFocusable = true
+        })
         page.addView(header)
 
         // Scenic fantasy banner, custom-drawn so the app does not bundle game artwork.
@@ -308,6 +311,14 @@ class MainActivity : Activity() {
     }
 
     private fun startQrScanner() {
+        // Request CAMERA explicitly before launching the embedded ZXing capture activity.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+            checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.CAMERA), 702)
+            return
+        }
+
         try {
             val integrator = IntentIntegrator(this)
             integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
@@ -316,8 +327,15 @@ class MainActivity : Activity() {
             integrator.setBarcodeImageEnabled(false)
             integrator.setOrientationLocked(false)
             integrator.initiateScan()
+        } catch (e: android.content.ActivityNotFoundException) {
+            status.text = "二维码扫描器启动失败：未找到 ZXing 扫描 Activity。"
+            showToast("扫描模块未正确安装，请更新 Gamer Mobile。")
+        } catch (e: SecurityException) {
+            status.text = "摄像头权限不足，无法启动扫码。"
+            showToast("请在系统设置中允许 Gamer Mobile 使用摄像头。")
         } catch (e: Exception) {
-            showToast("无法启动二维码扫描器：" + (e.localizedMessage ?: "请检查摄像头权限"))
+            status.text = "二维码扫描器启动失败：${e.localizedMessage ?: "未知错误"}"
+            showToast("无法启动二维码扫描器，请检查摄像头权限后重试。")
         }
     }
 
@@ -591,6 +609,13 @@ class MainActivity : Activity() {
             startVoiceInput()
         } else if (requestCode == 701) {
             status.text = "未获得麦克风权限，无法使用语音控制。"
+        } else if (requestCode == 702 && grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            startQrScanner()
+        } else if (requestCode == 702) {
+            status.text = "未获得摄像头权限，无法扫描电脑端二维码。请在系统设置中允许摄像头权限。"
+            showToast("摄像头权限被拒绝，扫码功能无法启动。")
         }
     }
 
