@@ -347,17 +347,43 @@ class MainActivity : Activity() {
             if (contents.isNullOrBlank()) {
                 status.text = "已取消二维码扫描。"
             } else {
+                val pairing = PairingClient.parse(contents)
+                if (pairing == null) {
+                    status.text = "二维码格式无效。请扫描电脑端 Gamer 配对页生成的二维码。"
+                    showToast("无效配对二维码")
+                    return
+                }
                 AlertDialog.Builder(this)
-                    .setTitle("识别到配对二维码")
-                    .setMessage("二维码内容：\\n\\n" + contents + "\\n\\n确认保存此配对信息？请只扫描你信任的电脑端二维码。")
+                    .setTitle("请求连接电脑")
+                    .setMessage("目标电脑：${pairing.host}:${pairing.port}\\n协议：${pairing.protocol}\\n\\n确认后，手机将向该电脑提交一次性配对请求。请确认这是你自己的电脑和可信局域网。")
                     .setNegativeButton("取消", null)
-                    .setPositiveButton("确认保存") { _, _ ->
-                        getSharedPreferences("gamer_mobile", MODE_PRIVATE).edit()
-                            .putString("last_pairing_qr_payload", contents)
-                            .putLong("last_pairing_qr_scanned_at", System.currentTimeMillis())
-                            .apply()
-                        status.text = "二维码已识别并保存。当前版本尚未实现电脑端握手协议，设备连接仍待接入。"
-                        showToast("配对二维码已保存；等待电脑端连接协议接入。")
+                    .setPositiveButton("确认配对") { _, _ ->
+                        status.text = "正在向电脑提交配对请求……"
+                        Thread {
+                            val result = try {
+                                PairingClient.claim(this, pairing)
+                            } catch (error: Exception) {
+                                PairingClient.Result(false, error.message ?: "连接失败", null)
+                            }
+                            runOnUiThread {
+                                if (result.success) {
+                                    getSharedPreferences("gamer_mobile", MODE_PRIVATE).edit()
+                                        .putString("paired_host", pairing.host)
+                                        .putInt("paired_port", pairing.port)
+                                        .putString("paired_instance_id", pairing.instanceId)
+                                        .putString("paired_session_id", result.sessionId)
+                                        .putString("paired_session_token", result.sessionToken)
+                                        .putLong("paired_at", System.currentTimeMillis())
+                                        .remove("last_pairing_qr_payload")
+                                        .apply()
+                                    status.text = "已与电脑建立配对会话。下一步可启用屏幕共享和游戏控制权限。"
+                                    showToast("配对成功！")
+                                } else {
+                                    status.text = "配对失败：${result.message}"
+                                    showToast("配对失败，请在电脑端重新生成二维码。")
+                                }
+                            }
+                        }.start()
                     }
                     .show()
             }
