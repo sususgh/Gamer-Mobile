@@ -14,7 +14,8 @@ import android.speech.tts.TextToSpeech
 import android.os.Build
 import java.util.Locale
 import android.os.Bundle
-import android.graphics.*\nimport android.graphics.Movie
+import android.graphics.*
+import android.graphics.Movie
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
